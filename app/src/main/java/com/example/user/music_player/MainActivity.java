@@ -16,7 +16,7 @@ import android.widget.SeekBar;
 
 import java.io.IOException;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public abstract class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private Button play, pause, stop;
     private MediaPlayer mediaPlayer;
     private SeekBar seekBar;
@@ -73,69 +73,69 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     boolean threadFlag = true;
 
-    @Override
-    public void onClick(View view) {
-        switch (view.getId()) {
-
-            case R.id.btn_play:
-                if (mediaPlayer == null) {
-//                    mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.music);
-                    mediaPlayer=new MediaPlayer();
-                    String uriString = "android.resource://" + getPackageName() + "/" + R.raw.music;
-                    try {
-                        mediaPlayer.setDataSource(this,Uri.parse(uriString));
-                        mediaPlayer.prepare();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                        @Override
-                        public void onPrepared(final MediaPlayer mediaPlayer) {
-                            Thread thred = new Thread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    while (threadFlag) {
-                                        runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                seekBar.setMax(mediaPlayer.getDuration());
-                                                seekBar.setProgress(mediaPlayer.getCurrentPosition());
-                                            }
-                                        });
-                                        try {
-                                            Thread.sleep(500);
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                }
-                            });
-                            thred.start();
-                        }
-                    });
-                    mediaPlayer.start();
-                } else if (!mediaPlayer.isPlaying()) {
-                    mediaPlayer.seekTo(currentposition);
-                    mediaPlayer.start();
-                }
-                break;
-
-            case R.id.btn_pause:
-                if (mediaPlayer != null) {
-                    mediaPlayer.pause();
-                    currentposition = mediaPlayer.getCurrentPosition();
-                }
-                break;
-
-            case R.id.btn_stop:
-                if (mediaPlayer != null) {
-                    mediaPlayer.stop();
-                    mediaPlayer = null;
-                }
-                break;
-
-        }
-    }
+//    @Override
+//    public void onClick(View view) {
+//        switch (view.getId()) {
+//
+//            case R.id.btn_play:
+//                if (mediaPlayer == null) {
+////                    mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.music);
+//                    mediaPlayer=new MediaPlayer();
+//                    String uriString = "android.resource://" + getPackageName() + "/" + R.raw.music;
+//                    try {
+//                        mediaPlayer.setDataSource(this,Uri.parse(uriString));
+//                        mediaPlayer.prepare();
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                    mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+//                        @Override
+//                        public void onPrepared(final MediaPlayer mediaPlayer) {
+//                            Thread thred = new Thread(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    while (threadFlag) {
+//                                        runOnUiThread(new Runnable() {
+//                                            @Override
+//                                            public void run() {
+//                                                seekBar.setMax(mediaPlayer.getDuration());
+//                                                seekBar.setProgress(mediaPlayer.getCurrentPosition());
+//                                            }
+//                                        });
+//                                        try {
+//                                            Thread.sleep(500);
+//                                        } catch (InterruptedException e) {
+//                                            e.printStackTrace();
+//                                        }
+//                                    }
+//                                }
+//                            });
+//                            thred.start();
+//                        }
+//                    });
+//                    mediaPlayer.start();
+//                } else if (!mediaPlayer.isPlaying()) {
+//                    mediaPlayer.seekTo(currentposition);
+//                    mediaPlayer.start();
+//                }
+//                break;
+//
+//            case R.id.btn_pause:
+//                if (mediaPlayer != null) {
+//                    mediaPlayer.pause();
+//                    currentposition = mediaPlayer.getCurrentPosition();
+//                }
+//                break;
+//
+//            case R.id.btn_stop:
+//                if (mediaPlayer != null) {
+//                    mediaPlayer.stop();
+//                    mediaPlayer = null;
+//                }
+//                break;
+//
+//        }
+//    }
 
     @Override
     protected void onDestroy() {
