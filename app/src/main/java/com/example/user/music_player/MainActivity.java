@@ -23,11 +23,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private boolean isChanging = false;
     int currentposition;
 
+    boolean threadFlag = true;
+    Song song;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Intent inputIntent = this.getIntent();
+        if (inputIntent != null && inputIntent.getExtras() != null) {
+            song = (Song) inputIntent.getExtras().getSerializable("Data");
+        }
 
         play = findViewById(R.id.btn_play);
         pause = findViewById(R.id.btn_pause);
@@ -37,6 +43,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         play.setOnClickListener(this);
         pause.setOnClickListener(this);
         stop.setOnClickListener(this);
+
+
+        Thread thred = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (threadFlag) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+                                seekBar.setMax(mediaPlayer.getDuration());
+                                seekBar.setProgress(mediaPlayer.getCurrentPosition());
+                            }
+                        }
+                    });
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        thred.start();
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 
@@ -61,7 +91,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
                 System.out.println("Pass");
-                mediaPlayer = ((MyService.MyBinder) iBinder).getMediaPlayer();
+                if (song != null) {
+                    mediaPlayer = ((MyService.MyBinder) iBinder).getMediaPlayer();
+                    try {
+                        mediaPlayer.reset();
+                        mediaPlayer.setDataSource(MainActivity.this, Uri.parse(song.uri));
+                        mediaPlayer.prepare();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                        @Override
+                        public void onPrepared(final MediaPlayer mediaPlayer) {
+                            mediaPlayer.start();
+                        }
+                    });
+
+                }
             }
 
             @Override
@@ -71,7 +117,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }, Context.BIND_AUTO_CREATE);
     }
 
-    boolean threadFlag = true;
 
     @Override
     public void onClick(View view) {
@@ -81,42 +126,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 if (mediaPlayer != null) {
 //                    mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.music);
-                    if (mediaPlayer.isPlaying()) {
-                        mediaPlayer.reset();
-                    }
-                    String uriString = "android.resource://" + getPackageName() + "/" + R.raw.music;
-                    try {
-                        mediaPlayer.setDataSource(this, Uri.parse(uriString));
-                        mediaPlayer.prepare();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                        @Override
-                        public void onPrepared(final MediaPlayer mediaPlayer) {
-                            Thread thred = new Thread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    while (threadFlag) {
-                                        runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                seekBar.setMax(mediaPlayer.getDuration());
-                                                seekBar.setProgress(mediaPlayer.getCurrentPosition());
-                                            }
-                                        });
-                                        try {
-                                            Thread.sleep(500);
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                }
-                            });
-                            thred.start();
-                        }
-                    });
                     mediaPlayer.start();
+
                 } else if (!mediaPlayer.isPlaying()) {
                     mediaPlayer.seekTo(currentposition);
                     mediaPlayer.start();
